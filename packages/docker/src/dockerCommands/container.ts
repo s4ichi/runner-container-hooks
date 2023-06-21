@@ -37,8 +37,10 @@ export async function createContainer(
       dockerArgs.push('-p', portMapping)
     }
   }
+  core.info(`createOptions: ${args.createOptions}`)
   if (args.createOptions) {
-    dockerArgs.push(...args.createOptions.split(' '))
+    dockerArgs.push(...tokenizeCreateOptions(args.createOptions))
+    core.info(`dokcerArgs: ${dockerArgs}`)
   }
 
   if (args.environmentVariables) {
@@ -155,6 +157,13 @@ export async function containerBuild(
   await runDockerCommand(dockerArgs, {
     workingDir: getWorkingDir(args.dockerfile)
   })
+}
+
+function tokenizeCreateOptions(createOptions: string): Array<string> {
+  return Array.from(
+    createOptions.matchAll(/"([^"]+)"|'([^']+)'|(\S+)/g),
+    m => m[1] || m[2] || m[3]
+  )
 }
 
 function getBuildContext(dockerfilePath: string): string {
@@ -397,8 +406,10 @@ export async function containerRun(
     dockerArgs.push(`--network=${network}`)
   }
 
+  core.info(`createOptions: ${args.createOptions}`)
   if (args.createOptions) {
-    dockerArgs.push(...args.createOptions.split(' '))
+    dockerArgs.push(...tokenizeCreateOptions(args.createOptions))
+    core.info(`dokcerArgs: ${dockerArgs}`)
   }
   if (args.environmentVariables) {
     for (const [key] of Object.entries(args.environmentVariables)) {
